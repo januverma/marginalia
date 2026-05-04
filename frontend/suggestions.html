@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Suggestions — Marginalia</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="brand" aria-label="Home">
+      <div class="monogram" aria-hidden="true">M</div>
+      <h1>Marginalia</h1>
+    </a>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/library">Library</a>
+      <a href="/suggestions" class="active">Suggestions</a>
+      <a href="/taste">Taste</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-intro">
+      <h2>The librarian's inbox</h2>
+      <div class="page-actions">
+        <label style="font-family: var(--font-ui); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+          Show
+          <select id="status-filter">
+            <option value="suggested" selected>Pending</option>
+            <option value="purchased">In library</option>
+            <option value="dismissed">Dismissed</option>
+            <option value="">All</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div id="suggestions-list"></div>
+  </main>
+
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/suggestions.js"></script>
+  <script src="/static/js/search.js"></script>
+</body>
+</html>

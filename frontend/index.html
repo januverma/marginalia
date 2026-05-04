@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marginalia</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="brand" aria-label="Home">
+      <div class="monogram" aria-hidden="true">M</div>
+      <h1>Marginalia</h1>
+    </a>
+    <nav>
+      <a href="/" class="active">Chat</a>
+      <a href="/library">Library</a>
+      <a href="/suggestions">Suggestions</a>
+      <a href="/taste">Taste</a>
+    </nav>
+    <div class="voice-switcher">
+      <label for="voice-select">Voice</label>
+      <select id="voice-select"></select>
+    </div>
+    <label class="search-toggle" title="Allow the librarian to search the web for in-print status, recent releases, and translations">
+      <input type="checkbox" id="search-toggle">
+      <span>Web search</span>
+    </label>
+  </header>
+
+  <div class="chat-layout">
+    <aside class="sidebar">
+      <button id="new-session-btn" class="secondary">+ New conversation</button>
+      <h3>Sessions</h3>
+      <div id="sessions-list"></div>
+    </aside>
+
+    <section class="chat-area">
+      <div class="messages" id="messages"></div>
+      <div class="compose">
+        <textarea id="message-input" rows="1" placeholder="Describe a feeling, a question, a mood…"></textarea>
+        <button id="send-btn" title="Send (⌘/Ctrl+Enter)" aria-label="Send">↑</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/markdown.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/search.js"></script>
+</body>
+</html>

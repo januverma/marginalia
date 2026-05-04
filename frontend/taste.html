@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Taste — Marginalia</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="brand" aria-label="Home">
+      <div class="monogram" aria-hidden="true">M</div>
+      <h1>Marginalia</h1>
+    </a>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/library">Library</a>
+      <a href="/suggestions">Suggestions</a>
+      <a href="/taste" class="active">Taste</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-intro">
+      <h2>A reader's portrait</h2>
+      <div class="page-actions">
+        <span id="taste-meta" class="reason"></span>
+        <button id="refresh-btn" class="secondary small">Refresh portrait</button>
+      </div>
+    </div>
+
+    <div id="goal-section"></div>
+
+    <div id="stats-row" class="stats-row"></div>
+
+    <div id="pull-quote"></div>
+
+    <div id="delta-section"></div>
+
+    <div id="highlights-section"></div>
+
+    <div id="constellation-section"></div>
+
+    <div id="prose-section"></div>
+
+    <div id="monthly-section"></div>
+
+    <div id="timeline-section"></div>
+  </main>
+
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/markdown.js"></script>
+  <script src="/static/js/taste.js"></script>
+  <script src="/static/js/search.js"></script>
+</body>
+</html>

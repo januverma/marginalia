@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Library — Marginalia</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="brand" aria-label="Home">
+      <div class="monogram" aria-hidden="true">M</div>
+      <h1>Marginalia</h1>
+    </a>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/library" class="active">Library</a>
+      <a href="/suggestions">Suggestions</a>
+      <a href="/taste">Taste</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-intro">
+      <h2>Your library</h2>
+      <div class="page-actions">
+        <button id="add-toggle" class="secondary small">+ Add a book</button>
+      </div>
+    </div>
+
+    <form id="add-form" class="form-row" style="display: none;">
+      <input name="title" placeholder="Title" required>
+      <input name="author" placeholder="Author" required>
+      <select name="status">
+        <option value="read">Read</option>
+        <option value="reading">Reading</option>
+        <option value="want_to_read">Want to read</option>
+        <option value="abandoned">Abandoned</option>
+      </select>
+      <select name="rating">
+        <option value="">No rating</option>
+        <option value="1">★</option>
+        <option value="2">★★</option>
+        <option value="3">★★★</option>
+        <option value="4">★★★★</option>
+        <option value="5">★★★★★</option>
+      </select>
+      <label>Started <input type="date" name="started_at" class="inline"></label>
+      <label>Finished <input type="date" name="finished_at" class="inline"></label>
+      <button type="submit">Add</button>
+    </form>
+
+    <div id="shelves"></div>
+  </main>
+
+  <div id="book-modal" class="modal-overlay hidden">
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button class="modal-close" aria-label="Close">×</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/library.js"></script>
+  <script src="/static/js/search.js"></script>
+</body>
+</html>
