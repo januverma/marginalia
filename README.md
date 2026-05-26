@@ -2,10 +2,14 @@
 
 A personal literary curator — a private royal librarian who suggests books based on a feeling, mood, or question, tracks what you read, and builds a living portrait of your taste.
 
-![Main Page](docs/screenshots/main_page.png)
-![chat](docs/screenshots/chat_example.png)
-![Constellation](docs/screenshots/constellation.png)
-![librarian](docs/screenshots/librarian.png)
+<p align="center">
+  <img src="docs/screenshots/main_page.png" alt="Main page" width="380">
+  <img src="docs/screenshots/chat_example.png" alt="Chat with the librarian" width="380">
+</p>
+<p align="center">
+  <img src="docs/screenshots/constellation.png" alt="Taste constellation" width="380">
+  <img src="docs/screenshots/librarian.png" alt="The librarian asks a question" width="380">
+</p>
 
 Single-user, self-hosted, BYOK. Clone the repo, add your Anthropic API key, run two commands, and you have your own librarian.
 
@@ -129,7 +133,6 @@ marginalia/
 │   └── static/{css,js}/
 ├── chat.py                   # terminal chat client
 ├── library.py                # library CLI
-├── PLAN.md                   # original design doc (historical)
 └── Usage.md                  # detailed usage notes
 ```
 
