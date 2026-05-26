@@ -2,6 +2,11 @@
 
 A personal literary curator — a private royal librarian who suggests books based on a feeling, mood, or question, tracks what you read, and builds a living portrait of your taste.
 
+![Main Page](docs/screenshots/main_page.png)
+![chat](docs/screenshots/chat_example.png)
+![Constellation](docs/screenshots/constellation.png)
+![librarian](docs/screenshots/librarian.png)
+
 Single-user, self-hosted, BYOK. Clone the repo, add your Anthropic API key, run two commands, and you have your own librarian.
 
 ## What it does
