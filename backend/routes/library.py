@@ -184,7 +184,7 @@ def add_book(body: BookCreate, db: DBSession = Depends(get_db)):
 def update_book(book_id: int, body: BookUpdate, db: DBSession = Depends(get_db)):
     """Edit title/author/pub_year. If title or author changes, re-query Google Books
     so cover/ISBN/buy_link get refreshed (e.g. you fixed a misspelled author)."""
-    from ..book_resolver import _lookup_google_books
+    from ..book_resolver import _lookup_google_books, GoogleBooksRateLimited
 
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
@@ -201,7 +201,10 @@ def update_book(book_id: int, body: BookUpdate, db: DBSession = Depends(get_db))
         book.pub_year = body.pub_year
 
     if title_changed or author_changed:
-        enriched = _lookup_google_books(book.title, book.author)
+        try:
+            enriched = _lookup_google_books(book.title, book.author)
+        except GoogleBooksRateLimited:
+            enriched = {}  # save the edit; sweep will re-enrich later
         if enriched.get("cover_url"):
             book.cover_url = enriched["cover_url"]
         if enriched.get("isbn"):

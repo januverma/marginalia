@@ -16,6 +16,34 @@ logger = logging.getLogger(__name__)
 
 _GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes"
 
+# Module-level rate-limit state. Set when we receive a 429; while set, all lookups
+# skip the API entirely so we stop hammering an already-blocked endpoint.
+_RATE_LIMIT_COOLDOWN = timedelta(hours=1)
+_rate_limit_until: Optional[datetime] = None
+
+
+class GoogleBooksRateLimited(Exception):
+    """Raised when Google Books has rate-limited us and we should not call the API."""
+    pass
+
+
+def _rate_limited_now() -> bool:
+    if _rate_limit_until is None:
+        return False
+    return datetime.now(timezone.utc) < _rate_limit_until
+
+
+def google_books_rate_limit_status() -> dict:
+    """For debugging / status endpoints."""
+    if not _rate_limit_until:
+        return {"rate_limited": False, "until": None}
+    now = datetime.now(timezone.utc)
+    return {
+        "rate_limited": now < _rate_limit_until,
+        "until": _rate_limit_until.isoformat(),
+        "seconds_remaining": max(0, (_rate_limit_until - now).total_seconds()),
+    }
+
 
 def _enhance_cover_url(url: Optional[str]) -> Optional[str]:
     """Upgrade Google Books thumbnail URL to a higher-resolution variant."""
@@ -28,9 +56,10 @@ def _enhance_cover_url(url: Optional[str]) -> Optional[str]:
 
 
 def refresh_book_cover(db: DBSession, book: Book) -> bool:
-    """Re-query Google Books for this title/author. Always records the attempt timestamp;
-    updates cover/isbn/buy_link when found. Returns True if cover URL changed."""
-    enriched = _lookup_google_books(book.title, book.author)
+    """Re-query Google Books for this title/author. Records the attempt timestamp ONLY
+    when we actually contacted the API (not when we were rate-limited). Updates
+    cover/isbn/buy_link when found. Returns True if cover URL changed."""
+    enriched = _lookup_google_books(book.title, book.author)  # may raise GoogleBooksRateLimited
     book.last_cover_attempt_at = datetime.now(timezone.utc)
     changed = False
     new_url = enriched.get("cover_url")
@@ -76,6 +105,12 @@ def sweep_missing_covers(max_per_sweep: int = 5, retry_after: timedelta = COVER_
                 if refresh_book_cover(db, book):
                     updated += 1
                 db.commit()
+            except GoogleBooksRateLimited:
+                # Stop the sweep — further calls during the cooldown window will also be 429d.
+                # Don't stamp last_cover_attempt_at; these books will be retried after the cooldown.
+                logger.warning("Stopping cover sweep — Google Books is rate-limiting us.")
+                db.rollback()
+                break
             except Exception as e:
                 logger.warning(f"Sweep cover refresh failed for book #{book.id}: {e}")
                 db.rollback()
@@ -99,6 +134,8 @@ def refresh_one_cover(book_id: int) -> None:
         try:
             refresh_book_cover(db, book)
             db.commit()
+        except GoogleBooksRateLimited:
+            db.rollback()  # silent — global rate-limit state already logged once
         except Exception as e:
             logger.warning(f"Single-book cover refresh failed for #{book_id}: {e}")
             db.rollback()
@@ -130,7 +167,12 @@ def find_or_create_book(
         if _author_tokens(c.author) & new_tokens:
             return c
 
-    enriched = _lookup_google_books(title, author)
+    # If Google Books is rate-limiting us, create the book with bare metadata.
+    # The background sweep will pick it up once the cooldown lifts.
+    try:
+        enriched = _lookup_google_books(title, author)
+    except GoogleBooksRateLimited:
+        enriched = {}
 
     book = Book(
         title=enriched.get("title", title).strip(),
@@ -146,6 +188,9 @@ def find_or_create_book(
 
 
 def _lookup_google_books(title: str, author: str) -> dict:
+    global _rate_limit_until
+    if _rate_limited_now():
+        raise GoogleBooksRateLimited()
     try:
         params: dict = {
             "q": f'intitle:"{title}" inauthor:"{author}"',
@@ -155,6 +200,14 @@ def _lookup_google_books(title: str, author: str) -> dict:
             params["key"] = GOOGLE_BOOKS_API_KEY
 
         resp = httpx.get(_GOOGLE_BOOKS_URL, params=params, timeout=5.0)
+        if resp.status_code == 429:
+            _rate_limit_until = datetime.now(timezone.utc) + _RATE_LIMIT_COOLDOWN
+            logger.warning(
+                "Google Books returned 429; backing off for %s. "
+                "Set GOOGLE_BOOKS_API_KEY in .env to raise the quota.",
+                _RATE_LIMIT_COOLDOWN,
+            )
+            raise GoogleBooksRateLimited()
         resp.raise_for_status()
         items = resp.json().get("items", [])
         if not items:
