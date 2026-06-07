@@ -16,13 +16,14 @@ from typing import List, Optional
 import anthropic
 from sqlalchemy.orm import Session as DBSession
 
-from .config import ANTHROPIC_API_KEY
+from .config import ANTHROPIC_API_KEY, DEEP_MODEL, SIGNAL_MODEL
 from .models import TasteProfile, TasteSignal, ReadingLog, Note, Quote, Book, LibrarianPrompt
 
 logger = logging.getLogger(__name__)
 
-SIGNAL_MODEL = "claude-haiku-4-5-20251001"
-PORTRAIT_MODEL = "claude-sonnet-4-6"
+# Re-export for backward compatibility within this module; PORTRAIT_MODEL is what
+# the portrait, delta, and librarian-prompt calls have used historically.
+PORTRAIT_MODEL = DEEP_MODEL
 REFRESH_COOLDOWN = timedelta(seconds=45)
 LIBRARIAN_PROMPT_COOLDOWN = timedelta(days=7)
 

@@ -11,7 +11,7 @@ import anthropic
 
 from ..database import get_db, SessionLocal
 from ..models import Session, Message, Suggestion
-from ..config import ANTHROPIC_API_KEY, load_profile
+from ..config import ANTHROPIC_API_KEY, CHAT_MODEL, load_profile
 from ..context_assembler import assemble_context
 from ..suggestion_parser import parse_suggestions
 from ..book_resolver import find_or_create_book
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
-MODEL = "claude-sonnet-4-6"
+MODEL = CHAT_MODEL
 MAX_TOKENS = 2048
 
 WEB_SEARCH_TOOL = {

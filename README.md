@@ -85,12 +85,13 @@ A few specific design choices:
 - **Web search is server-side.** Claude's `web_search` tool runs server-side at Anthropic. Used sparingly, capped at 3 searches/turn, with a UI toggle to disable.
 - **Single-user.** No auth, no user table. One instance = one reader. This keeps the code small, the privacy story simple, and the data inspectable (open `curator.db` in any SQLite viewer).
 
-Models in use:
+Models in use (each overridable via env var):
 
-| Role | Model |
-|------|-------|
-| Chat conversation, taste portrait | `claude-sonnet-4-6` |
-| Signal extraction from user messages | `claude-haiku-4-5-20251001` |
+| Role | Default model | Env var |
+|------|---------------|---------|
+| Chat conversation (per-turn, streamed) | `claude-sonnet-4-6` | `MARGINALIA_CHAT_MODEL` |
+| Taste portrait, delta, librarian-initiated questions | `claude-opus-4-7` | `MARGINALIA_DEEP_MODEL` |
+| Signal extraction from user messages | `claude-haiku-4-5-20251001` | `MARGINALIA_SIGNAL_MODEL` |
 
 ## Cost
 

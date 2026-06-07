@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from backend.database import init_db, SessionLocal
 from backend.models import Session as ChatSession, Message, Suggestion
-from backend.config import load_profile, ANTHROPIC_API_KEY
+from backend.config import load_profile, ANTHROPIC_API_KEY, CHAT_MODEL
 from backend.context_assembler import assemble_context
 from backend.suggestion_parser import parse_suggestions
 from backend.book_resolver import find_or_create_book
@@ -122,7 +122,7 @@ def main():
         print("\nThinking...", end="\r")
 
         kwargs = {
-            "model": "claude-sonnet-4-6",
+            "model": CHAT_MODEL,
             "max_tokens": 2048,
             "system": ctx["system"],
             "messages": ctx["messages"],
