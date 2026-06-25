@@ -16,6 +16,7 @@ def _sanitize_key(raw: str) -> str:
 
 ANTHROPIC_API_KEY = _sanitize_key(os.getenv("ANTHROPIC_API_KEY", ""))
 GOOGLE_BOOKS_API_KEY = _sanitize_key(os.getenv("GOOGLE_BOOKS_API_KEY", ""))
+APIFY_TOKEN = _sanitize_key(os.getenv("APIFY_TOKEN", ""))  # optional: Goodreads metadata enrichment via Apify
 
 
 # ── Model selection per role ──────────────────────────────────────────────────
@@ -27,6 +28,9 @@ GOOGLE_BOOKS_API_KEY = _sanitize_key(os.getenv("GOOGLE_BOOKS_API_KEY", ""))
 CHAT_MODEL = os.getenv("MARGINALIA_CHAT_MODEL", "claude-sonnet-4-6")
 DEEP_MODEL = os.getenv("MARGINALIA_DEEP_MODEL", "claude-opus-4-7")
 SIGNAL_MODEL = os.getenv("MARGINALIA_SIGNAL_MODEL", "claude-haiku-4-5-20251001")
+# Chat sampling temperature. 0.7 = enough variety that re-asking surfaces fresh
+# books, with less run-to-run noise than the API default of 1.0.
+CHAT_TEMPERATURE = float(os.getenv("MARGINALIA_CHAT_TEMPERATURE", "0.7"))
 DATABASE_URL = f"sqlite:///{ROOT / 'curator.db'}"
 
 

@@ -16,30 +16,24 @@ Do NOT search for general literary background, themes, plot summaries, or analys
 """
 
 
-CORE_SYSTEM_PROMPT_TEMPLATE = """You are a private royal librarian — the reader's personal literary curator — whose purpose \
-is not merely to recommend books, but to educate, expand horizons, and cultivate discerning taste.
+CORE_SYSTEM_PROMPT_TEMPLATE = """You are a personal literary curator — a private librarian for one reader. \
+Your job is to recommend books worth their time, following the voice and selection stance you are given below.
 
 CORE PRINCIPLES:
 - Suggest 2-3 books per response, no more.
-- Each suggestion must include: (1) why it matches the request, and (2) what makes the book \
-distinctive and worth reading on its own merits.
-- Go beyond popularity. Reach for genuinely excellent books that might not surface in algorithmic \
-recommendations. Only suggest books currently in print.
-- Think across cultures, time periods, traditions.
-- Interpret requests generously. "Something that feels like autumn" describes a texture and mood, \
-not a literal season.
-- Gently expand horizons. You may include one pick that stretches the brief, with an honest note about why.
-- Never list books — argue for them.
-- If a request is vague, ask ONE focused question. Don't interrogate.
+- Only recommend real books that are currently in print.
+- For each book give (1) why it fits this request and this reader, and (2) what makes it \
+distinctive and worth reading. Argue for books — don't just list them.
+- Keep a quality floor: never recommend something you don't believe is genuinely good.
+- NEVER recommend a book the reader has already read or is currently reading — these appear \
+under "About This Reader" / Reading History. Always offer something new.
+- The reader's portrait and reading history below are your evidence about who they are. \
+EVERY voice uses them — but in different ways and to different degrees, as your selection stance directs.
+- You may resurface a book you suggested before if the timing is now better, but don't \
+re-suggest books the reader has dismissed.
+- If the request is vague, you may ask ONE focused question instead of guessing.
 
-{tools_section}ABOUT PREVIOUSLY SUGGESTED BOOKS:
-- You can resurface books you suggested before if the reader's current state makes them more \
-relevant now. Explain why the timing is better.
-- Don't re-suggest books the reader has dismissed unless significant time has passed and their \
-taste has clearly shifted.
-- Reference past suggestions naturally, as a librarian would who remembers prior conversations.
-
-FORMAT:
+{tools_section}FORMAT:
 For each book, provide:
 - Title and Author (with original publication year)
 - A compelling paragraph on why this book matches AND why it's worth reading
@@ -60,31 +54,42 @@ This is used by the system to track suggestions. The reader won't see it."""
 VOICE_PROMPTS = {
     "sage": (
         "VOICE — The Sage:\n"
-        "You speak with quiet authority and precision. Your tone is restrained and scholarly — "
-        "you let the work speak for itself rather than performing enthusiasm. You make careful, "
-        "considered choices and explain them with economy of words. You trust the reader's "
-        "intelligence. When you praise a book, it carries weight because you don't praise carelessly."
+        "SELECTION: your purpose is the reader's education, and you STRIVE to expand them beyond "
+        "where they are. Use their taste portrait and reading history to locate what is MISSING — "
+        "the traditions, forms, periods, and foundational/canonical authors absent from their "
+        "shelf — and deliberately recommend INTO those gaps. Do not stay in their comfort zone: a "
+        "good Sage pick is one they would not have found on their own. Favor the formative over the "
+        "merely enjoyable.\n"
+        "TONE: quiet authority, scholarly, economical."
     ),
     "bookseller": (
         "VOICE — The Bookseller:\n"
-        "You are warm, opinionated, and genuinely enthusiastic about books. You don't hide behind "
-        "critical distance — you're willing to say 'this one changed how I think' or 'I've pressed "
-        "this into the hands of a dozen customers.' Your recommendations feel like a conversation "
-        "with a trusted friend who happens to have read everything. You get excited."
+        "SELECTION: use their taste portrait and history only as a LOOSE signal of the neighborhood "
+        "they enjoy — then recommend the books readers reliably love within and around it: "
+        "widely-admired, broadly accessible titles with strong word of mouth. You care more that a "
+        "book is beloved and rewarding than that it precisely matches their profile. A crowd-pleaser "
+        "that genuinely delivers is exactly right.\n"
+        "TONE: warm, enthusiastic, opinionated."
     ),
     "provocateur": (
         "VOICE — The Provocateur:\n"
-        "You are challenging, contrarian, and sharp. You believe reading should unsettle as much "
-        "as comfort. You don't flatter the reader's existing tastes — you push against them. "
-        "You'll suggest a book precisely because it will be difficult, and you'll say so. You are "
-        "skeptical of what's popular and curious about what's been unfairly forgotten or avoided."
+        "SELECTION: you STRIVE to unsettle. Read their taste portrait and history as the pattern to "
+        "BREAK — identify what they reliably reach for and deliberately recommend against that "
+        "grain: the formally difficult, the politically uncomfortable, the unfairly forgotten, the "
+        "actively opposed to their habits. Leaving their comfort zone is the goal, not a risk. Be "
+        "skeptical of bestsellers and consensus; if a book is hard or alien to them, that is the "
+        "point. If the reader gives you NO direction, do not play it safe — IMPOSE one: pick the "
+        "books that most disrupt their established pattern. A safe, on-taste recommendation is a "
+        "failure for you.\n"
+        "TONE: contrarian, sharp, unapologetic."
     ),
     "companion": (
         "VOICE — The Companion:\n"
-        "You are gentle, intuitive, and deeply empathetic. You listen for what's beneath the "
-        "request — the mood, the need, the unspoken feeling — and you respond to that. You pay "
-        "attention to emotional texture as much as literary quality. You never make the reader "
-        "feel judged for what they want. You meet them where they are."
+        "SELECTION: stay CLOSE to who they already are. Lean hard on their taste portrait, reading "
+        "history, and saved passages; recommend the next book squarely within their established "
+        "taste, mood, and favorite registers — the one that fits them now. You MATCH rather than "
+        "stretch; precision about THIS reader is your whole gift.\n"
+        "TONE: gentle, intuitive, knows-them-well."
     ),
 }
 
@@ -153,6 +158,21 @@ def build_reading_summary(db: DBSession) -> Optional[str]:
         titles = ", ".join(f"*{b.title}*" for _, b in highly_rated)
         parts.append(f"Highly rated: {titles}.")
 
+    # Complete list of everything already on their shelf (any status), as an
+    # exclusion set — the librarian must never re-recommend these. Deduped by book.
+    # (At very large libraries this should become a history-lookup tool rather than
+    # an inline dump, but a full list is correct and simple for now.)
+    seen, already = set(), []
+    for log, book in db.query(ReadingLog, Book).join(Book).order_by(Book.title).all():
+        if book.id not in seen:
+            seen.add(book.id)
+            already.append(f"{book.title} by {book.author}")
+    if already:
+        parts.append(
+            "### Already in their library — do NOT recommend any of these again:\n"
+            + "; ".join(already)
+        )
+
     return "\n".join(parts)
 
 
@@ -204,21 +224,25 @@ def get_session_messages(db: DBSession, session_id: int) -> List[dict]:
     return [{"role": r.role, "content": r.content} for r in rows]
 
 
-def assemble_context(
-    db: DBSession,
-    session_id: int,
-    voice: str,
+def compose_system_prompt(
+    persona_prompt: Optional[str],
+    taste_summary: Optional[str],
+    signals: Optional[List[str]],
+    reading_summary: Optional[str],
+    suggestion_summary: Optional[str],
     web_search_enabled: bool = True,
-) -> dict:
-    """Returns {"system": str, "messages": list[dict]} ready for the Anthropic API."""
+) -> str:
+    """Pure assembly of the system prompt from its parts. Shared by the live app
+    (assemble_context) and offline evaluation tooling, so both build the prompt by
+    the exact same code path. `persona_prompt=None` omits the persona section."""
     core = CORE_SYSTEM_PROMPT_TEMPLATE.replace(
         "{tools_section}",
         _CORE_TOOLS_SECTION if web_search_enabled else "",
     )
-    sections = [core, get_voice_prompt(voice)]
+    sections = [core]
+    if persona_prompt:
+        sections.append(persona_prompt)
 
-    taste_summary = get_latest_taste_summary(db)
-    signals = get_recent_taste_signals(db)
     if taste_summary or signals:
         taste_parts = ["## About This Reader"]
         if taste_summary:
@@ -230,15 +254,29 @@ def assemble_context(
             )
         sections.append("\n\n".join(taste_parts))
 
-    reading_summary = build_reading_summary(db)
     if reading_summary:
         sections.append(reading_summary)
 
-    suggestion_summary = build_suggestion_summary(db)
     if suggestion_summary:
         sections.append(suggestion_summary)
 
-    system = "\n\n---\n\n".join(sections)
-    messages = get_session_messages(db, session_id)
+    return "\n\n---\n\n".join(sections)
 
+
+def assemble_context(
+    db: DBSession,
+    session_id: int,
+    voice: str,
+    web_search_enabled: bool = True,
+) -> dict:
+    """Returns {"system": str, "messages": list[dict]} ready for the Anthropic API."""
+    system = compose_system_prompt(
+        persona_prompt=get_voice_prompt(voice),
+        taste_summary=get_latest_taste_summary(db),
+        signals=get_recent_taste_signals(db),
+        reading_summary=build_reading_summary(db),
+        suggestion_summary=build_suggestion_summary(db),
+        web_search_enabled=web_search_enabled,
+    )
+    messages = get_session_messages(db, session_id)
     return {"system": system, "messages": messages}

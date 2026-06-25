@@ -11,7 +11,7 @@ import anthropic
 
 from ..database import get_db, SessionLocal
 from ..models import Session, Message, Suggestion
-from ..config import ANTHROPIC_API_KEY, CHAT_MODEL, load_profile
+from ..config import ANTHROPIC_API_KEY, CHAT_MODEL, CHAT_TEMPERATURE, load_profile
 from ..context_assembler import assemble_context
 from ..suggestion_parser import parse_suggestions
 from ..book_resolver import find_or_create_book
@@ -155,6 +155,7 @@ def send_message(session_id: int, body: ChatRequest, db: DBSession = Depends(get
     response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
+        temperature=CHAT_TEMPERATURE,
         system=ctx["system"],
         messages=ctx["messages"],
         tools=[WEB_SEARCH_TOOL] if web_search else [],
@@ -203,6 +204,7 @@ def stream_message(session_id: int, body: ChatRequest):
             stream_kwargs = {
                 "model": MODEL,
                 "max_tokens": MAX_TOKENS,
+                "temperature": CHAT_TEMPERATURE,
                 "system": ctx["system"],
                 "messages": ctx["messages"],
             }

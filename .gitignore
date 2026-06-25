@@ -1,7 +1,9 @@
 .env
 curator.db
+curator.db.bak
 profile.json
 blog/
+paper/
 __pycache__/
 *.py[cod]
 .venv/
@@ -10,3 +12,8 @@ venv/
 .DS_Store
 *.db-shm
 *.db-wal
+
+# Research — kept private (see the local `research` branch); never push to the public repo.
+study/
+study2/
+PLAN.md
